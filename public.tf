@@ -1,5 +1,5 @@
 module "public_label" {
-  source     = "git::https://github.com/cloudposse/terraform-null-label.git?ref=tags/0.14.0"
+  source     = "git::https://github.com/blackbookusa/terraform-null-label.git?ref=tags/0.14.0"
   context    = module.label.context
   attributes = compact(concat(module.label.attributes, ["public"]))
 
@@ -16,7 +16,7 @@ locals {
 resource "aws_subnet" "public" {
   count             = length(var.availability_zones)
   vpc_id            = data.aws_vpc.default.id
-  availability_zone = element(var.availability_zones, count.index)
+  availability_zone = var.availability_zones[count.index]
 
   cidr_block = cidrsubnet(
     signum(length(var.cidr_block)) == 1 ? var.cidr_block : data.aws_vpc.default.cidr_block,
@@ -34,7 +34,7 @@ resource "aws_subnet" "public" {
         module.public_label.id,
         var.delimiter,
         replace(
-          element(var.availability_zones, count.index),
+          var.availability_zones[count.index],
           "-",
           var.delimiter
         )
@@ -64,13 +64,13 @@ resource "aws_route" "public" {
 
 resource "aws_route_table_association" "public" {
   count          = signum(length(var.vpc_default_route_table_id)) == 1 ? 0 : length(var.availability_zones)
-  subnet_id      = element(aws_subnet.public.*.id, count.index)
+  subnet_id      = aws_subnet.public.*.id[count.index]
   route_table_id = aws_route_table.public[0].id
 }
 
 resource "aws_route_table_association" "public_default" {
   count          = signum(length(var.vpc_default_route_table_id)) == 1 ? length(var.availability_zones) : 0
-  subnet_id      = element(aws_subnet.public.*.id, count.index)
+  subnet_id      = aws_subnet.public.*.id[count.index]
   route_table_id = var.vpc_default_route_table_id
 }
 
