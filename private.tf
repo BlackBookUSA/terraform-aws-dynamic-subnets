@@ -16,7 +16,7 @@ locals {
 resource "aws_subnet" "private" {
   count             = length(var.availability_zones)
   vpc_id            = data.aws_vpc.default.id
-  availability_zone = element(var.availability_zones, count.index)
+  availability_zone = var.availability_zones[count.index]
 
   cidr_block = cidrsubnet(
     signum(length(var.cidr_block)) == 1 ? var.cidr_block : data.aws_vpc.default.cidr_block,
@@ -32,12 +32,13 @@ resource "aws_subnet" "private" {
         module.private_label.id,
         var.delimiter,
         replace(
-          element(var.availability_zones, count.index),
+          var.availability_zones[count.index],
           "-",
           var.delimiter
         )
       )
-    }
+    },
+    var.private_subnet_tags
   )
 
   lifecycle {
@@ -58,7 +59,7 @@ resource "aws_route_table" "private" {
         module.private_label.id,
         var.delimiter,
         replace(
-          element(var.availability_zones, count.index),
+          var.availability_zones[count.index],
           "-",
           var.delimiter
         )
@@ -70,8 +71,8 @@ resource "aws_route_table" "private" {
 resource "aws_route_table_association" "private" {
   count = length(var.availability_zones)
 
-  subnet_id      = element(aws_subnet.private.*.id, count.index)
-  route_table_id = element(aws_route_table.private.*.id, count.index)
+  subnet_id      = aws_subnet.private.*.id[count.index]
+  route_table_id = aws_route_table.private.*.id[count.index]
 }
 
 resource "aws_network_acl" "private" {

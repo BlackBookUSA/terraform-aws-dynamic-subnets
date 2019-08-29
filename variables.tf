@@ -76,3 +76,13 @@ variable "map_public_ip_on_launch" {
   default     = true
   description = "Instances launched into a public subnet should be assigned a public IP address"
 }
+
+variable "private_subnet_tags" {
+  type  = map(string)
+  description = "Tags to be applied only to private subnets in a map style e.g. {\"type\" = \"private\"}"
+}
+
+variable "public_subnet_tags" {
+  type = map(string)
+  description = "Tags to be applied only to public subnets in a map style e.g. {\"type\" = \"public\"}"
+}
